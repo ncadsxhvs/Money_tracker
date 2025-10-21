@@ -10,6 +10,7 @@ import { CSVUploader } from './CSVUploader';
 import { Toast } from './Toast';
 import { EditTransactionModal } from './EditTransactionModal';
 import { DashboardSkeleton } from './SkeletonLoader';
+import { Analytics } from './Analytics';
 import { Transaction } from '@/types/transaction';
 
 export function Dashboard() {
@@ -30,24 +31,25 @@ export function Dashboard() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  // Filter transactions by date range
-  const filteredByDate = useMemo(() => {
-    let filtered = transactions;
+  // Filter transactions by all criteria
+  const filteredTransactions = useMemo(() => {
+    let filtered = allTransactions;
 
-    if (startDate) {
-      const start = new Date(startDate);
-      filtered = filtered.filter((t) => new Date(t.date) >= start);
+    // Category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(t => t.category === categoryFilter);
     }
 
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Include entire end date
-      filtered = filtered.filter((t) => new Date(t.date) <= end);
+    // Type filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(t => t.type === typeFilter);
     }
 
     return filtered;
-  }, [transactions, startDate, endDate]);
+  }, [allTransactions, categoryFilter, typeFilter]);
 
   const balance = calculateBalance(allTransactions);
 
@@ -114,12 +116,20 @@ export function Dashboard() {
         )}
       </div>
 
+      {/* Analytics Overview */}
+      <Analytics transactions={filteredTransactions} />
+
       {/* Add Transaction Form */}
       <TransactionFormHorizontal onAdd={addTransaction} />
 
       {/* Transactions Table */}
       <TransactionTable
         transactions={allTransactions}
+        filteredTransactions={filteredTransactions}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
         onEdit={handleEdit}
         onDelete={deleteTransaction}
       />
